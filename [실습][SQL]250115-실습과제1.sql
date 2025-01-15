@@ -1,0 +1,6 @@
+-- 고객 테이블에서 모든 고객의 이름과 이메일 출력
+SELECT NAME, EMAIL FROM CUSTOMERS;
+-- 계좌 테이블에서 모든 계좌의 계좌 ID와 잔액 출력
+SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS;
+-- 거래 테이블에서 모든 거래의 금액과 거래 유형 출력
+SELECT AMOUNT, TRANSACTION_TYPE FROM TRANSACTIONS;
