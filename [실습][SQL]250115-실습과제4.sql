@@ -1,4 +1,4 @@
--- 고객 테이블에서 모든 고객의 이름과 이메일을 출력
+-- 고객 테이블에서 고객 이름을 오름차순으로 정렬하여 출력
 SELECT NAME FROM CUSTOMERS
 ORDER BY NAME ASC;
 
