@@ -1,4 +1,4 @@
---SQL 실습 과제 13
+-----------SQL 실습과제 13
 
 --1. 지점별 승인된 대출의 총 금액을 계산한 뒤 
 -- 해당 금액이 전체 지점에서 승인된 대출 금액의 평균보다 낮은 지점의 지점명과 승인된 대출의 총 금액, 전체 지점에서 승인된 대출 금액의 평균을 출력
@@ -49,6 +49,7 @@ SELECT
 FROM EMPLOYEES
 WHERE SALARY IS NOT NULL
 ORDER BY PERCENT DESC;
+
 
 --4. 각 계좌의 최고 거래 금액이 높은 순으로 상위 5위까지의 계좌를 출력하세요.
 -- 동일 순위가 존재할 경우 각각의 순위를 모두 출력하고 출력 컬럼은 계좌 ID, 최고 거래금액
@@ -163,5 +164,3 @@ SELECT
     END COMPARED_TO_GLOBAL_AVG  
 FROM EMPLOYEES
 WHERE SALARY IS NOT NULL;
-
-
