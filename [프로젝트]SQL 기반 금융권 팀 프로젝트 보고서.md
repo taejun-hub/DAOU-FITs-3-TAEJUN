@@ -1,0 +1,294 @@
+# SQL 기반 금융권 팀 프로젝트 보고서
+## 1. 프로젝트 개요
+
+- **조 이름:** 강병태
+- **프로젝트 이름:** 주식 상품 거래 기반 데이터 베이스 설계
+- **진행 기간:** 2025년 1월 31일 – 2025년 2월 3일
+
+## 2. **프로젝트 팀원:**
+
+- 김태준
+- 김병주
+- 김강온
+
+## 3. 프로젝트 배경 및 목적
+
+금융 데이터베이스는 주식 거래, 계좌 관리, 금융 데이터 분석 등 다양한 영역에서 활용되며, 방대한 데이터를 효율적으로 처리하고 관리하는 것이 핵심이다.
+
+따라서 기존 금융 시스템의 데이터 구조를 이해하고, 주식 거래 시스템 데이터 베이스를 직접 설계하고 운영하는 경험을 쌓기 위한 실습 프로젝트를 진행했다.
+
+특히, 투자자들은 어떤 종목이 현재 가장 인기 있는지 확인하고 투자 결정을 내리는 데 참고할 수 있는 데이터를 원하기 때문에 거래 내역의 실시간 반영, 주식 주문 및 체결 관리, 계좌 및 투자 내역 추적과 같은 기능과 함께  주식 상품의 조회수 기반 인기 종목 추천 기능을 포함한 시스템을 제공하고자 한다.
+
+## 4. 프로젝트 구조 및 단계별 진행 내용
+
+### 4.1. 데이터베이스 설계
+
+- **데이터베이스 시스템:** Oracle
+- **설계된 테이블:**
+    - Users (고객 정보)
+    - Accounts(계좌)
+    - Holdings(보유 종목)
+    - Stocks(주식 상품)
+    - Reports(주식 현황)
+    - Financial(회사 재무 정보)
+    - Orders(주문)
+    - Transactions (거래 체결 내역)
+    - Views(조회)
+- **키 테이블 관계:**
+    - Users → Accounts(1:N 관계)
+    - Users → Views(1:N 관계)
+    - Accounts → Holdings(1:N 관계)
+    - Accounts →Orders(1:N 관계)
+    - Stocks → Financial(1:N 관계)
+    - Stocks → Reports(1:N 관계)
+
+### 4.1. 샘플 데이터 삽입
+
+- insert문을 사용하여 각 테이블 당 20~300개의 샘플 데이터 삽입
+- 테이블 관계를 고려하여 데이터 무결성을 유지 할 수 있도록 진행
+
+### 4.3. SQL 쿼리 설계 및 구현
+
+1. 기본 정보 조회
+
+```sql
+--20대 고객 정보 조회
+SELECT NAME, GENDER, PHONE_NUMBER, EMAIL, AGE
+FROM users 
+WHERE AGE BETWEEN 20 AND 29
+ORDER BY AGE, NAME;
+```
+
+```sql
+--STOCK0001의 재무정보
+SELECT f.financial_date,
+       f.quarter,
+       f.earnings, 
+       f.operating_expenses,
+       f.net_profit 
+FROM financials f
+JOIN stocks s ON f.stock_id = s.stock_id
+WHERE f.stock_id = 'STOCK0001'
+ORDER BY f.financial_date DESC;
+```
+
+1. 거래 데이터 통계 분석
+
+```sql
+--25년 1월 수익률 상위 5개 주식
+SELECT r1.stock_id, 
+       s.name AS stock_name, 
+       ROUND(((r2.previous_close - r1.previous_close) / r1.previous_close) * 100, 2) AS return_percentage 
+FROM reports r1
+JOIN reports r2 ON r1.stock_id = r2.stock_id
+JOIN stocks s ON r1.stock_id = s.stock_id
+WHERE TO_CHAR(r1.report_date, 'YYYY-MM-DD') = '2025-01-01'
+  AND TO_CHAR(r2.report_date, 'YYYY-MM-DD') = '2025-01-31'
+  AND r1.previous_close IS NOT NULL
+  AND r2.previous_close IS NOT NULL
+ORDER BY return_percentage DESC
+FETCH FIRST 5 ROWS ONLY;
+```
+
+```sql
+--2025/01/01~2025/02/01 동안 거래량이 많은 상위 5개 주식
+SELECT o.stock_id, 
+       SUM(t.quantity) AS total_traded_volume 
+FROM transactions t
+JOIN orders o ON t.order_id = o.order_id
+WHERE t.transaction_date BETWEEN TO_DATE('2025-01-01', 'YYYY-MM-DD') 
+                             AND TO_DATE('2025-02-01', 'YYYY-MM-DD')
+GROUP BY o.stock_id
+ORDER BY total_traded_volume DESC
+FETCH FIRST 5 ROWS ONLY;
+```
+
+1. 주식 보유 현황
+
+```sql
+--user001의 계좌별 보유 종목 및 수량 조회
+SELECT h.account_id, 
+       s.stock_id, 
+       s.name AS stock_name, 
+       h.quantity, 
+       h.total_price 
+FROM holdings h
+JOIN stocks s ON h.stock_id = s.stock_id
+JOIN accounts a ON h.account_id = a.account_id
+WHERE a.user_id = 'user001';
+```
+
+```sql
+--사용자별 총 보유 주식 평가 금액 상위 10위
+SELECT a.user_id, 
+       SUM(h.quantity * r.previous_close) AS total_portfolio_value 
+FROM holdings h
+JOIN accounts a ON h.account_id = a.account_id
+JOIN reports r ON h.stock_id = r.stock_id
+WHERE r.report_date = (SELECT MAX(report_date) FROM reports WHERE stock_id = h.stock_id)
+GROUP BY a.user_id
+ORDER BY total_portfolio_value DESC
+FETCH FIRST 10 ROWS ONLY;
+```
+
+1. 주가 변동률
+
+```sql
+-- 일별 주식 가격 변동률 분석
+SELECT
+    REPORT_DATE,
+    STOCK_ID,
+    NVL(LAG(PREVIOUS_CLOSE) 
+    OVER (PARTITION BY STOCK_ID ORDER BY REPORT_DATE), 0)  PREV_PRICE,
+    PREVIOUS_CLOSE PRICE,
+    NVL(TRUNC(PREVIOUS_CLOSE / LAG(PREVIOUS_CLOSE) 
+    OVER (PARTITION BY STOCK_ID ORDER BY REPORT_DATE) * 100 - 100), 0) PCT_CHANGE
+FROM REPORTS
+ORDER BY STOCK_ID, REPORT_DATE;
+
+-- 전일 데이터 삽입
+INSERT INTO reports (report_date, stock_id, previous_close, open, 
+											high, low, volume, creation_timestamp, update_timestamp)
+SELECT
+    TO_CHAR(report_date - 1),
+    STOCK_ID,
+    ROUND(DBMS_RANDOM.VALUE(0.7, 1.3) * PREVIOUS_CLOSE),
+    ROUND(DBMS_RANDOM.VALUE(0.7, 1.3) * OPEN),
+    ROUND(DBMS_RANDOM.VALUE(0.7, 1.3) * LOW),
+    ROUND(DBMS_RANDOM.VALUE(0.7, 1.3) * HIGH),
+    ROUND(DBMS_RANDOM.VALUE(0.7, 1.3) * VOLUME),
+    SYSTIMESTAMP, SYSTIMESTAMP
+FROM 
+(
+    SELECT * 
+        FROM (
+            SELECT 
+                report_date, stock_id, previous_close, open, high, low, volume,
+                ROW_NUMBER() OVER (PARTITION BY STOCK_ID ORDER BY REPORT_DATE) ROW_NUM
+            FROM REPORTS
+        )
+    WHERE ROW_NUM = 1
+);
+```
+
+1. 계좌별 월별 수익률
+
+```sql
+--월별 계좌 수익률
+CREATE VIEW MonthlyPrices AS
+    SELECT h.account_id,
+           TO_CHAR(r.report_date, 'YYYYMM') AS month,
+           r.stock_id,
+           FIRST_VALUE(r.previous_close) OVER (
+               PARTITION BY h.account_id, r.stock_id, TO_CHAR(r.report_date, 'YYYYMM')
+               ORDER BY r.report_date
+           ) AS first_price,
+           LAST_VALUE(r.previous_close) OVER (
+             PARTITION BY h.account_id, r.stock_id, TO_CHAR(r.report_date, 'YYYYMM')
+             ORDER BY r.report_date ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+           ) AS last_price
+    FROM holdings h
+    JOIN reports r ON h.stock_id = r.stock_id;
+
+SELECT mp.account_id,
+       mp.month,
+       ROUND(AVG((mp.last_price - mp.first_price) / mp.first_price) * 100, 2) AS avg_monthly_return
+FROM MonthlyPrices mp
+WHERE mp.first_price IS NOT NULL AND mp.last_price IS NOT NULL
+GROUP BY mp.account_id, mp.month
+ORDER BY mp.account_id, mp.month;
+```
+
+1. 거래량 순위
+
+```sql
+SELECT
+    STOCK_ID,
+    SUM(T.QUANTITY) TOTAL_VOLUME
+FROM TRANSACTIONS T, ORDERS O
+WHERE T.ORDER_ID = O.ORDER_ID
+GROUP BY STOCK_ID
+ORDER BY TOTAL_VOLUME DESC;
+```
+
+## 5. 프로젝트 결과
+
+1. **기본 정보 조회**
+    
+    20대 고객 정보 조회
+    
+    ![1](https://github.com/user-attachments/assets/5cbc5d2a-c4e0-43c2-88c2-7bb2bca37924)
+
+    
+    STOCK0001의 재무 정보
+    
+    ![2](https://github.com/user-attachments/assets/90fa5905-7302-4781-90e0-3b6dd08fcc2c)
+
+    
+2. **거래 데이터 통계 분석**
+    
+    25년 1월 수익률 상위 5개 주식
+    
+    ![3](https://github.com/user-attachments/assets/fed091d0-cfee-4fac-8b1f-820dfb183728)
+
+    
+    2025/01/01~2025/02/01 동안 거래량이 많은 상위 5개 주식
+    
+    ![4](https://github.com/user-attachments/assets/87cbcaf3-53a9-436c-933b-c289d9227508)
+
+    
+3. **주식 보유 현황**
+    
+    user001의 계좌별 보유 종목 및 수량 조회
+    
+    ![5](https://github.com/user-attachments/assets/5d435af8-df15-4c62-9b96-894fff030fa7)
+
+    
+    사용자별 총 보유 주식 평가 금액 상위 10위
+    
+    ![6](https://github.com/user-attachments/assets/5d68732c-dd01-4423-8c33-6d6910b878e5)
+
+    
+4. **주가 변동률**
+
+![7](https://github.com/user-attachments/assets/202d7b76-36a6-4dae-bcfb-c36b1f8442e9)
+
+
+1. **계좌별 월별 수익률**
+
+![8](https://github.com/user-attachments/assets/686bee61-4c72-463e-bac9-4a58242ee3b7)
+
+1. **거래량 순위**
+
+![9](https://github.com/user-attachments/assets/d9af9c61-b1f1-4302-b2ea-d4f1bc268a7b)
+
+
+## 6. 프로젝트의 의의 및 개선점
+
+### 6.1. 의의
+
+- **금융 데이터베이스 구조에 대한 이해**
+    - 금융권에서 활용되는 주식 거래 시스템의 핵심 요소(거래 내역, 주문 및 체결 관리, 계좌 및 보유 종목 관리 등)를 직접 설계해봄으로써 실제 금융 데이터베이스의 작동 원리에 대해 알게 되었다.
+- **효율적인 데이터 처리 및 분석 능력 향상**
+    - 대량의 금융 데이터를 관리하고, 월별 수익률, 거래량, 주가 변동률 등의 분석 쿼리를 최적화하여 효율적인 SQL 설계 및 성능 개선 방법을 학습해 볼 수 있었다.
+- **실제 투자 의사 결정에 유용한 데이터 제공**
+    - 단순한 계좌 및 주식 보유 정보 조회를 넘어, 수익률 상위 주식 분석, 조회수 기반 인기 종목 추천, 월별 수익률 분석 등의 기능을 구현하여 투자자들에게 실질적으로 도움이 될 수 있는 시스템을 설계하였다.
+
+### 6.2. 개선점 및 향후 방향의 범위를 넓힐 계획
+
+- **성능 최적화**
+    - 현재는 단순한 JOIN과 WHERE 조건을 활용한 쿼리 위주로 작성되었지만, 인덱스 적용, 파티셔닝, 쿼리 튜닝 등을 통해  조회 속도를 더욱 향상시킬 수 있을 것이다.
+- **데이터 무결성과 실시간 반영을 고려한 설계**
+    - 계좌와 보유 종목, 거래 내역 간의 관계를 유지하면서, 데이터 무결성을 보장하는 설계를 적용함과 동시에 거래 내역이 실시간으로 반영될 수 있도록 데이터 업데이트 전략이 필요할 것으로 보인다.
+- **고급 데이터 분석 기능 추가**
+    - 현재는 기본적인 주가 변동률과 거래량 분석을 수행했지만, 주가 예측 모델(예: 머신러닝 기반 주가 예측)이나 포트폴리오 최적화 기능 등의 고급 데이터 분석 기능을 추가하면 더욱 좋을 것 같다.
+- **보안 및 데이터 접근 제어 강화**
+    - 금융 데이터는 민감한 개인 정보 및 거래 정보를 포함하기 때문에, USERS 테이블의 비밀번호 같은 경우 적절한 암호화 알고리즘을 활용한 암호화가 필요해 보인다.
+
+## 7. 결론
+
+본 프로젝트를 통해 실제 금융권에서 활용되는 데이터베이스 설계 및 분석 프로세스를 경험하고, 투자자들에게 유용한 정보를 제공할 수 있는 다양한 기능을 구현해 봄으로써 금융 데이터의 효율적인 저장 및 관리 방식에 대한 이해를 높이고, 대용량 데이터를 다루는 최적화된 SQL 설계 능력을 향상시킬 수 있었다.
+
+또한, 거래 내역을 실시간으로 반영하는 데이터 구조 설계, 월별 수익률 분석 및 인기 종목 추천 기능 구현을 통해 금융 데이터베이스의 실제 활용 능력을 기르고, 데이터 기반 의사 결정의 중요성을 체감할 수 있었다.
+
+다만, 성능 최적화, 실시간 데이터 처리, 보안 강화 등의 개선점을 반영한다면 더욱 실용적이고 확장 가능한 금융 데이터 시스템을 구축할 수 있을 것으로 보인다.
