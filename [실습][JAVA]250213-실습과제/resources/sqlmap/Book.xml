@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!--<mapper namespace="example.myBook">-->
+<!--    <select id="selectByISBNHashMap" parameterType="String" resultType="HashMap">-->
+<!--        &lt;!&ndash; # 을 붙이면 ''가 붙여서 가져온다 &ndash;&gt;-->
+<!--        &lt;!&ndash; CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 &ndash;&gt;-->
+<!--        <![CDATA[-->
+<!--            select bisbn, btitle, bprice, bauthor-->
+<!--            from book-->
+<!--            where bisbn = #{bisbn}-->
+<!--        ]]>-->
+<!--    </select>-->
+
+<!--    <select id="selectAllHashMap" resultType="HashMap">-->
+<!--        <![CDATA[-->
+<!--            select bisbn, btitle, bprice, bauthor-->
+<!--            from book-->
+<!--        ]]>-->
+<!--    </select>-->
+
+<!--</mapper>-->
+<mapper namespace="bookmybatis.myBook">
+    <select id="selectObservableList" parameterType="String" resultType="Book">
+        <!-- # 을 붙이면 ''가 붙여서 가져온다 -->
+        <!-- CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 -->
+        <![CDATA[
+                select bisbn, btitle, bprice, bauthor
+                from book
+                where btitle like '%${text}%'
+            ]]>
+    </select>
+    <select id="registerBook" parameterType="Book">
+        <!-- # 을 붙이면 ''가 붙여서 가져온다 -->
+        <!-- CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 -->
+        <![CDATA[
+            insert into book
+            ( bisbn, btitle, bprice, bauthor )
+            VALUES
+            ( #{bisbn}, #{btitle}, #{bprice}, #{bauthor} )
+        ]]>
+    </select>
+    <select id="updateBook" parameterType="Book">
+        <!-- # 을 붙이면 ''가 붙여서 가져온다 -->
+        <!-- CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 -->
+        <![CDATA[
+            update book
+            set btitle = #{btitle}, bprice = #{bprice}, bauthor = #{bauthor}
+            where bisbn = #{bisbn}
+        ]]>
+    </select>
+    <select id="deleteBook" parameterType="String">
+        <!-- # 을 붙이면 ''가 붙여서 가져온다 -->
+        <!-- CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 -->
+        <![CDATA[
+        delete
+        from book
+        where bisbn = #{bisbn}
+    ]]>
+    </select>
+
+</mapper>
