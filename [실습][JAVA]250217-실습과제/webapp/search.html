@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도서 검색 프로그램</title>
+</head>
+<body>
+<h1>도서 검색 프로그램</h1>
+<form action="http://localhost:8080/bookServlet/search" method="post">
+    <label for="keyword">도서명 키워드</label>
+    <input type="text" id="keyword" name="keyword" placeholder="도서명을 입력하세요">
+
+    <p>가격 필터</p>
+    <input type="radio" name="priceFilter" id="price1" value="10000">
+    <label for="price1">10,000원 미만</label>
+    <br>
+    <input type="radio" name="priceFilter" id="price2" value="20000">
+    <label for="price2">20,000원 미만</label>
+    <br>
+    <input type="radio" name="priceFilter" id="price3" value="30000">
+    <label for="price3">30,000원 미만</label>
+    <br>
+    <input type="radio" name="priceFilter" id="price4" value="40000">
+    <label for="price4">40,000원 미만</label>
+    <br><br>
+
+    <input type="submit" value="도서 검색!">
+</form>
+</body>
+</html>
