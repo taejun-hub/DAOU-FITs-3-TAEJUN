@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글 작성</title>
+    <style>
+        label {
+            display: block;  /* 라벨을 블록 요소로 변경하여 줄바꿈 적용 */
+            margin-bottom: 5px;
+        }
+        textarea {
+            width: 100%;  /* 가로 크기 조정 */
+            height: 150px; /* 높이 조정 */
+        }
+    </style>
+</head>
+<body>
+<h2>글 작성 페이지</h2>
+<form action="boardServlet" method="post">
+    <label for="title">글 제목:</label>
+    <input type="text" id="title" name="title" required><br><br>
+
+    <label for="content">글 내용:</label>
+    <textarea id="content" name="content" rows="5" cols="50" required></textarea><br><br>
+
+    <input type="submit" value="글 작성">
+</form>
+</body>
+</html>

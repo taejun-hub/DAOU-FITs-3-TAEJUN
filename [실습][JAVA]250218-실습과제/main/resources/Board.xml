@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="bookmybatis.board">
+    <select id="selectList" parameterType="String" resultType="Board">
+        <!-- # 을 붙이면 ''가 붙여서 가져온다 -->
+        <!-- CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 -->
+        <![CDATA[
+            select board_id, title, content, member_id, name
+            from board
+            join membertbl
+            on board.member_id = membertbl.id
+            where member_id = #{member_id}
+        ]]>
+    </select>
+    <select id="selectOne" parameterType="Integer" resultType="Board">
+        <![CDATA[
+        select board_id, title, content, member_id
+        from board
+        where board_id = #{board_id}
+        ]]>
+    </select>
+    <select id="insert" parameterType="Board">
+        <![CDATA[
+        insert into board
+            ( title, content, member_id )
+        VALUES
+            ( #{title}, #{content}, #{member_id} )
+        ]]>
+    </select>
+
+</mapper>
