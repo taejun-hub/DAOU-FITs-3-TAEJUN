@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="board">
+    <!-- 🔹 Board 객체와 SQL 결과 매핑 -->
+<!--    <resultMap id="BoardResultMap" type="Board">-->
+<!--        <result column="board_id" property="board_id"/>-->
+<!--        <result column="title" property="title"/>-->
+<!--        <result column="name" property="author"/>-->
+<!--        <result column="created_at" property="created_at"/>-->
+<!--        <result column="comment_cnt" property="comment_cnt"/>-->
+<!--        <result column="view_cnt" property="view_cnt"/>-->
+<!--    </resultMap>-->
+    <select id="selectList" resultType="Board">
+        <!-- # 을 붙이면 ''가 붙여서 가져온다 -->
+        <!-- CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 -->
+        <![CDATA[
+        select board_id, like_cnt, title, view_cnt, created_at, comment_cnt, name as author
+        from (
+            select b.board_id, b.title, b.created_at, b.member_id, b.view_cnt, COUNT(distinct c.comment_id) as comment_cnt, count(distinct l.like_id) as like_cnt
+            from board b
+            left join comments c on b.board_id = c.board_id
+            left join likes l on b.board_id = l.board_id
+            group by b.board_id, b.title, b.created_at, b.member_id, b.view_cnt
+        ) t, membertbl m
+        where t.member_id = m.id
+        order by t.created_at desc
+        ]]>
+    </select>
+    <select id="selectOne" parameterType="Integer" resultType="Board">
+        <![CDATA[
+        select board_id, title, content, member_id, name, created_at
+        from board
+        join membertbl
+        on board.member_id = membertbl.id
+        where board_id = #{board_id}
+        ]]>
+    </select>
+    <insert id="insert" parameterType="Board">
+        <![CDATA[
+        insert into board
+            ( title, content, member_id )
+        VALUES
+            ( #{title}, #{content}, #{member_id} )
+        ]]>
+    </insert>
+    <update id="update" parameterType="Board">
+        <![CDATA[
+        update board
+        set title = #{title}, content = #{content}
+        where board_id = #{board_id}
+        ]]>
+    </update>
+    <delete id="delete" parameterType="Integer">
+        <![CDATA[
+        delete board
+        where board_id = #{board_id}
+        ]]>
+    </delete>
+
+</mapper>

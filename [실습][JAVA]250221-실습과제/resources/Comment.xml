@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="comment">
+    <select id="selectCommentByBoardId" resultType="Comment">
+        <!-- # 을 붙이면 ''가 붙여서 가져온다 -->
+        <!-- CDATA 는 SQL Query 안 특수문자(<)가 tag로 인식되지 않도록 처리 -->
+        <![CDATA[
+            select comment_id, board_id, content, user_id, name, created_at
+            from comments
+            left join membertbl
+            on comments.user_id = membertbl.id
+            where comments.board_id = #{board_id}
+            order by created_at desc
+        ]]>
+    </select>
+    <insert id="insert" parameterType="Comment">
+         <![CDATA[
+            insert into comments
+                ( content, board_id, user_id )
+            VALUES
+                ( #{content}, #{board_id}, #{user_id} )
+        ]]>
+    </insert>
+    <update id="update" parameterType="Comment">
+        <![CDATA[
+            update comments
+            set content = #{content}
+            where board_id = #{board_id}
+        ]]>
+    </update>
+    <delete id="delete" parameterType="Integer">
+        <![CDATA[
+        delete comments
+        where comment_id = #{comment_id}
+        ]]>
+    </delete>
+
+
+</mapper>
